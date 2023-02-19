@@ -1,0 +1,64 @@
+_schema-version: "3.2"
+ID: dmsadmin
+version: 0.0.1
+modules:
+- name: dmsadmin-approuter
+  type: approuter.nodejs
+  path: dmsadmin-approuter
+  requires:
+  - name: dmsadmin_html_repo_runtime
+  - name: uaa_dmsadmin
+  - name: sdm-instance
+  parameters:
+    disk-quota: 256M
+    memory: 256M
+- name: dmsadmin_ui_deployer
+  type: com.sap.application.content
+  path: .
+  requires:
+  - name: dmsadmin_html_repo_host
+    parameters:
+      content-target: true
+  build-parameters:
+    build-result: resources
+    requires:
+    - artifacts:
+      - dmsadmin-content.zip
+      name: dmsadmin
+      target-path: resources/
+- name: dmsadmin
+  type: html5
+  path: dmsadmin
+  build-parameters:
+    builder: custom
+    commands:
+    - npm run build
+    supported-platforms: []
+resources:
+- name: sdm-instance
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: sdm
+    service-plan: free 
+- name: dmsadmin_html_repo_runtime
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-plan: app-runtime
+- name: dmsadmin_html_repo_host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-plan: app-host
+- name: uaa_dmsadmin
+  type: org.cloudfoundry.managed-service
+  parameters:
+    path: ./xs-security.json
+    service: xsuaa
+    service-name: dmsadmin-xsuaa-service
+    service-plan: application
+build-parameters:
+  before-all:
+  - builder: custom
+    commands:
+    - npm install
